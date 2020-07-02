@@ -6,7 +6,7 @@
 const int k=3;
 void sum (int mas[k][k]);
 void minimum(int matrix[k][k]);
-
+//dscsdvfdvdfbv
 
 int main()
 
