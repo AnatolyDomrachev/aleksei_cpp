@@ -10,7 +10,9 @@ void minimum(int matrix[k][k]);
 //11111111111111
 
 
-// first
+
+//second
+
 
 int main()
 
