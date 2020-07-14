@@ -9,14 +9,17 @@
 int main(int argc, char const *argv[]) 
 { 
 
-//	char *head = "Server: Apache/2.2.11 (Win32) PHP/5.3.0\nLast-Modified: Sat, 16 Jan 2010 21:16:42 GMT\nContent-Type: text/plain; charset=windows-1251\nContent-Language: ru\n";
+//	char head[2048] = "Server: Apache/2.2.11 (Win32) PHP/5.3.0\nLast-Modified: Sat, 16 Jan 2010 21:16:42 GMT\nContent-Type: text/plain; charset=windows-1251\nContent-Language: ru\n";
 
 	int server_fd, new_socket, valread; 
 	struct sockaddr_in address; 
 	int opt = 1; 
 	int addrlen = sizeof(address); 
 	char buffer[1024] = {0}; 
-	char *hello = "HTTP/1.1 200 OK\nDate: Wed, 11 Feb 2009 11:20:59 GMT\nServer: Apache\nX-Powered-By: PHP/5.2.4-2ubuntu5wm1\nLast-Modified: Wed, 11 Feb 2009 11:20:59 GMT\nContent-Language: ru\nContent-Type: text/html; charset=utf-8\nContent-Length: 1234\nConnection: close\n\nHello from server\n"; 
+	//char head[2048] = "HTTP/1.1 200 OK\nDate: Wed, 11 Feb 2009 11:20:59 GMT\nServer: Apache\nX-Powered-By: PHP/5.2.4-2ubuntu5wm1\nLast-Modified: Wed, 11 Feb 2009 11:20:59 GMT\nContent-Language: ru\nContent-Type: text/html; charset=utf-8\nContent-Length: 1234\nConnection: close\n\n"; 
+	char head[8000] = "HTTP/1.1 200 OK\r\n\n";
+
+	char hello[2048] = "Hello from server\n\n";
 	
 	// Creating socket file descriptor 
 	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) 
@@ -59,11 +62,10 @@ int main(int argc, char const *argv[])
 		} 
 		valread = read( new_socket , buffer, 1024); 
 		printf("%s\n",buffer ); 
-	//	send(new_socket , head , strlen(head) , 0 ); 
-		send(new_socket , hello , strlen(hello) , 0 ); 
-		valread = read( new_socket , buffer, 1024); 
+		send(new_socket , head , strlen(head) , 0 ); 
 		send(new_socket , hello , strlen(hello) , 0 ); 
 		printf("Hello message sent\n"); 
+		shutdown(new_socket , SHUT_RDWR);
 		close(new_socket);
 	}
 
