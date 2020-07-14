@@ -5,22 +5,27 @@
 #include <stdlib.h> 
 #include <netinet/in.h> 
 #include <string.h> 
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+#include <unistd.h>
+
 #define PORT 8080 
+
+struct thread_args { int socket; struct sockaddr_in address;};
+
+void* thread_func (void*);
+
 int main(int argc, char const *argv[]) 
 { 
 
+    pthread_t thread;
 //	char head[2048] = "Server: Apache/2.2.11 (Win32) PHP/5.3.0\nLast-Modified: Sat, 16 Jan 2010 21:16:42 GMT\nContent-Type: text/plain; charset=windows-1251\nContent-Language: ru\n";
 
 	int server_fd, new_socket, valread; 
 	struct sockaddr_in address; 
 	int opt = 1; 
 	int addrlen = sizeof(address); 
-	char buffer[1024] = {0}; 
-	//char head[2048] = "HTTP/1.1 200 OK\nDate: Wed, 11 Feb 2009 11:20:59 GMT\nServer: Apache\nX-Powered-By: PHP/5.2.4-2ubuntu5wm1\nLast-Modified: Wed, 11 Feb 2009 11:20:59 GMT\nContent-Language: ru\nContent-Type: text/html; charset=utf-8\nContent-Length: 1234\nConnection: close\n\n"; 
-	char head[8000] = "HTTP/1.1 200 OK\r\n\n";
-
-	char hello[2048] = "Hello from server\n\n";
-	
 	// Creating socket file descriptor 
 	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) 
 	{ 
@@ -52,23 +57,34 @@ int main(int argc, char const *argv[])
 		exit(EXIT_FAILURE); 
 	} 
 
-	while(1)
-	{
-		if ((new_socket = accept(server_fd, (struct sockaddr *)&address, 
-						(socklen_t*)&addrlen))<0) 
-		{ 
-			perror("accept"); 
-			exit(EXIT_FAILURE); 
-		} 
-		valread = read( new_socket , buffer, 1024); 
-		printf("%s\n",buffer ); 
-		send(new_socket , head , strlen(head) , 0 ); 
-		send(new_socket , hello , strlen(hello) , 0 ); 
-		printf("Hello message sent\n"); 
-		shutdown(new_socket , SHUT_RDWR);
-		close(new_socket);
+	struct thread_args ta;
+
+	while(new_socket = accept(server_fd, (struct sockaddr *)&address,(socklen_t*)&addrlen)) 
+	{ 
+		ta.socket = new_socket; 
+		ta.address = address;
+		pthread_create(&thread,NULL,thread_func,(void*)&ta) ;
+		sleep(1);
 	}
 
 	return 0; 
 } 
 
+void* thread_func (void* s)
+{		
+	struct thread_args ta = *((struct thread_args*)s);
+	int new_socket = ta.socket; 
+	struct sockaddr_in address = ta.address;
+	int valread; 
+	char buffer[1024] = {0}; 
+	char head[8000] = "HTTP/1.1 200 OK\r\n\n";
+	char hello[2048] = "Hello from server\n\n";
+	valread = read( new_socket , buffer, 1024); 
+	printf("%s\n",buffer ); 
+	send(new_socket , head , strlen(head) , 0 ); 
+	send(new_socket , hello , strlen(hello) , 0 ); 
+	printf("Hello message sent\n"); 
+	printf("%s\n", inet_ntoa(address.sin_addr));
+	shutdown(new_socket , SHUT_RDWR);
+	close(new_socket);
+}
